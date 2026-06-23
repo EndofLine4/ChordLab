@@ -43,16 +43,16 @@ select option{background:#1e0a35;color:#f8eeff}
 ::-webkit-scrollbar-thumb{background:rgba(140,50,210,.55);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:rgba(175,75,255,.82)}
 *{scrollbar-width:thin;scrollbar-color:rgba(140,50,210,.55) rgba(20,5,40,.65)}
-.content{padding:18px;overflow-y:auto;max-height:calc(100vh - 120px)}.content:has(#panel-songmode.active),.content:has(#panel-track.active){padding:0;overflow:hidden;max-height:none}
-#track-url-input::placeholder{color:rgba(180,140,220,.45)}
+.content{padding:18px;overflow-y:auto;max-height:calc(100vh - 120px)}.content:has(#panel-songmode.active){padding:0;overflow:hidden;max-height:none}
+
 /* ── Track Mode & Song Mode — full-screen below the always-visible header ── */
 :root{--header-h:65px}
 .panel{display:none}
 .panel.active{display:block}
 #panel-songmode{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background:linear-gradient(160deg,#1a0520 0%,#2d0a3a 50%,#1a0520 100%);overflow:hidden}
 #panel-songmode.active{display:flex;flex-direction:column}
-#panel-track{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background:linear-gradient(160deg,#0e0418 0%,#1e0830 50%,#0e0418 100%);overflow:hidden}
-#panel-track.active{display:flex;flex-direction:column}
+
+
 /* chord grid */
 .chord-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;margin-bottom:16px}
 .chord-card{background:linear-gradient(135deg,rgba(50,10,80,.7),rgba(30,5,55,.9));border:1px solid rgba(255,80,120,.2);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
@@ -259,7 +259,7 @@ select option{background:#1e0a35;color:#f8eeff}
     <button class="htab" onclick="setTab('scales',this)">Scales</button>
     <button class="htab" onclick="setTab('progressions',this)">Progressions</button>
     <button class="htab" onclick="setTab('songmode',this)">🎵 Song Mode</button>
-    <button class="htab" onclick="setTab('track',this)">▶ Track</button>
+    
     <button class="htab" onclick="setTab('voicing',this)">🎹 Voicing &amp; Melody</button>
     <button class="htab" onclick="setTab('theory',this)">Theory</button>
   </div>
@@ -635,163 +635,6 @@ select option{background:#1e0a35;color:#f8eeff}
       </div>
     </div>
   </div>
-</div>
-
-<!-- ===== TRACK MODE PANEL ===== -->
-<div class="panel" id="panel-track" style="padding:0">
-  <!-- ── Top bar: URL input ── -->
-  <div style="background:linear-gradient(90deg,#150530,#2e0850,#150530);padding:9px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(180,80,255,.2);flex-shrink:0">
-    <button onclick="setTab('chords',document.querySelector('.htab'))" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#e8d8ff;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s;flex-shrink:0;align-self:flex-start">← Back</button>
-    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-      <input id="track-url-input" type="url" placeholder="Paste a YouTube, Spotify, or SoundCloud URL…"
-        style="width:100%;box-sizing:border-box;background:rgba(200,150,255,.09);border:1px solid rgba(180,80,255,.32);border-radius:6px;padding:6px 11px;color:rgba(230,210,255,.92);font-size:12px;outline:none;font-family:inherit"
-        onkeydown="if(event.key==='Enter')loadTrackUrl()">
-      <div style="font-size:9.5px;color:rgba(180,140,220,.38);padding-left:3px;display:flex;gap:8px;align-items:center">
-        <span>✨ AI chord detect: ~500 lookups per $0.50</span>
-        <span style="color:rgba(180,140,220,.22)">·</span>
-        <span id="track-lookup-counter" style="color:rgba(180,140,220,.38)"></span>
-      </div>
-    </div>
-    <button onclick="loadTrackUrl()" style="background:rgba(180,80,255,.22);border:1px solid rgba(200,120,255,.45);color:#e8d8ff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;flex-shrink:0;font-weight:500;align-self:flex-start">Load →</button>
-  </div>
-
-  <!-- ── Song info bar (hidden until a track loads) ── -->
-  <div id="track-song-info" style="display:none;padding:6px 16px;background:rgba(180,80,255,.06);border-bottom:1px solid rgba(180,80,255,.1);flex-shrink:0;align-items:center;gap:10px">
-    <span style="font-size:13px;font-weight:700;color:#fff" id="track-title"></span>
-    <span style="color:rgba(255,180,200,.4);font-size:12px">·</span>
-    <span style="font-size:11px;color:rgba(255,180,200,.6)" id="track-artist"></span>
-    <span id="track-load-msg" style="font-size:10px;color:rgba(255,180,200,.4);margin-left:4px"></span>
-  </div>
-
-  <!-- ── Chord builder + feel + controls bar ── -->
-  <div style="background:rgba(15,3,30,.7);padding:8px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid rgba(180,80,255,.12);flex-shrink:0">
-    <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;flex-shrink:0">Chords</span>
-    <div id="track-chord-list" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
-    <!-- Chord adder -->
-    <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-      <select id="track-add-root" style="background:#1a0830;border:1px solid rgba(180,80,255,.25);color:#fff;border-radius:5px;padding:4px 6px;font-size:11px;font-family:inherit">
-        <option>C</option><option>C#</option><option>D</option><option>Eb</option>
-        <option>E</option><option>F</option><option>F#</option><option>G</option>
-        <option>Ab</option><option>A</option><option>Bb</option><option>B</option>
-      </select>
-      <select id="track-add-type" style="background:#1a0830;border:1px solid rgba(180,80,255,.25);color:#fff;border-radius:5px;padding:4px 6px;font-size:11px;font-family:inherit">
-        <option value="maj">maj</option><option value="m">m</option>
-        <option value="7">7</option><option value="maj7">maj7</option>
-        <option value="m7">m7</option><option value="9">9</option>
-        <option value="maj9">maj9</option><option value="m9">m9</option>
-        <option value="add9">add9</option><option value="sus4">sus4</option>
-        <option value="dim">dim</option><option value="m7b5">m7b5</option>
-      </select>
-      <button onclick="addTrackChord(document.getElementById('track-add-root').value,document.getElementById('track-add-type').value)"
-        style="background:rgba(180,80,255,.15);border:1px solid rgba(180,80,255,.3);color:#e8d8ff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-family:inherit">+ Add</button>
-    </div>
-
-    <div style="width:1px;height:18px;background:rgba(255,100,140,.2);flex-shrink:0"></div>
-    <button id="track-detect-btn" onclick="autoDetectChords()"
-      style="background:linear-gradient(135deg,rgba(255,200,80,.18),rgba(180,80,255,.18));border:1px solid rgba(255,200,100,.32);color:rgba(255,235,150,.9);padding:4px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-family:inherit;font-weight:500;flex-shrink:0">✨ Detect chords</button>
-    <input type="file" id="track-audio-file" accept="audio/*" style="display:none" onchange="analyzeAudioFile(this.files[0])">
-
-    <div style="width:1px;height:18px;background:rgba(255,100,140,.2);flex-shrink:0"></div>
-    <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;flex-shrink:0">Feel</span>
-    <div id="track-feel-btns" style="display:flex;gap:4px;flex-wrap:wrap"></div>
-
-    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0">
-      <label style="font-size:10px;color:var(--text3);letter-spacing:.5px">BPM</label>
-      <input type="range" id="track-bpm-slider" min="40" max="180" value="80"
-        oninput="trackBpm=+this.value;document.getElementById('track-bpm-val').textContent=this.value"
-        style="width:64px;accent-color:#c97fff">
-      <span id="track-bpm-val" style="font-size:11px;color:#fff;min-width:22px;text-align:right">80</span>
-      <div style="width:1px;height:18px;background:rgba(255,100,140,.2)"></div>
-      <span id="track-beat-display" style="font-size:11px;color:rgba(255,180,200,.55)">—</span>
-      <button onclick="stopTrack()" style="background:rgba(255,80,120,.12);border:1px solid rgba(255,80,120,.25);color:rgba(255,180,200,.7);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">⬛</button>
-      <button id="track-play-btn" onclick="toggleTrackPlay()" style="background:linear-gradient(135deg,rgba(180,80,255,.35),rgba(255,80,120,.25));border:1px solid rgba(200,120,255,.5);color:#fff;padding:6px 20px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit">▶ Play</button>
-    </div>
-  </div>
-
-  <!-- ── Detect fallback banner ── -->
-  <div id="track-detect-bar" style="display:none;padding:7px 14px;background:rgba(255,200,70,.05);border-bottom:1px solid rgba(255,200,70,.14);align-items:center;gap:10px;flex-shrink:0">
-    <span id="track-detect-msg" style="font-size:11px;color:rgba(255,230,150,.7);flex:1"></span>
-    <button onclick="document.getElementById('track-audio-file').click()"
-      style="background:rgba(255,200,70,.12);border:1px solid rgba(255,200,70,.28);color:rgba(255,235,150,.85);padding:4px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-family:inherit;white-space:nowrap;flex-shrink:0">📂 Upload audio file</button>
-    <button onclick="document.getElementById('track-detect-bar').style.display='none'"
-      style="background:none;border:none;color:rgba(255,200,70,.4);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;line-height:1">×</button>
-  </div>
-
-  <!-- ── Main area: piano roll (left) + media (right) ── -->
-  <div style="display:grid;grid-template-columns:1fr 380px;flex:1;min-height:0;overflow:hidden">
-
-    <!-- Piano roll -->
-    <div style="position:relative;overflow:hidden;background:linear-gradient(180deg,#050115 0%,#0e0328 100%)" id="track-stage">
-      <canvas id="track-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
-      <div id="track-hit-line" style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(120,180,255,.85),rgba(200,255,180,.9),rgba(120,180,255,.85),transparent);box-shadow:0 0 12px rgba(140,200,255,.55)"></div>
-      <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none">
-        <div id="track-chord-name" style="font-size:28px;font-weight:700;color:#fff;opacity:0;transition:opacity .2s;text-shadow:0 0 20px currentColor"></div>
-        <div id="track-chord-type" style="font-size:12px;color:rgba(200,230,255,.65);margin-top:2px;opacity:0;transition:opacity .2s"></div>
-      </div>
-    </div>
-
-    <!-- Media embed panel -->
-    <div style="display:flex;flex-direction:column;background:rgba(0,0,8,.75);border-left:1px solid rgba(180,80,255,.12)">
-      <!-- Embed area -->
-      <div style="flex:1;position:relative;min-height:0;display:flex;align-items:center;justify-content:center;padding:16px" id="track-yt-wrap">
-        <div id="track-yt-placeholder" style="text-align:center;color:rgba(180,140,220,.3);padding:20px">
-          <div style="font-size:36px;margin-bottom:14px;opacity:.35">🎵</div>
-          <div style="font-size:12px;line-height:1.8">Paste a link above and click <strong style="color:rgba(200,160,255,.6)">Load →</strong><br><br>
-            <span style="font-size:10px;opacity:.7;line-height:2">
-              Works with:<br>
-              <span style="color:rgba(255,100,100,.7)">▶ YouTube</span> &nbsp;·&nbsp;
-              <span style="color:rgba(30,215,96,.7)">● Spotify</span> &nbsp;·&nbsp;
-              <span style="color:rgba(255,85,0,.7)">◉ SoundCloud</span>
-            </span><br><br>
-            <span style="font-size:10px;opacity:.5">Then add chords and hit Play<br>to follow along with the chord roll</span>
-          </div>
-        </div>
-      </div>
-      <!-- How-to hint -->
-      <div id="track-hint" style="padding:12px 16px;border-top:1px solid rgba(180,80,255,.1);font-size:10px;color:rgba(180,140,210,.4);line-height:1.7">
-        <strong style="color:rgba(200,160,255,.55)">How to use:</strong><br>
-        1 · Paste a YouTube, Spotify, or SoundCloud URL and click Load<br>
-        2 · Add chords from the bar above<br>
-        3 · Set a feel + BPM, then hit Play<br>
-        The chord roll scrolls while the track plays
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ── API Key modal ── -->
-  <div id="track-apikey-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(5,1,15,.88);backdrop-filter:blur(5px);align-items:center;justify-content:center">
-    <div style="background:linear-gradient(160deg,#150530 0%,#2e0850 100%);border:1px solid rgba(180,80,255,.35);border-radius:14px;padding:28px 32px;max-width:420px;width:90%;text-align:center;box-shadow:0 0 60px rgba(120,40,200,.3)">
-      <div style="font-size:24px;margin-bottom:8px">🔑</div>
-      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Anthropic API Key</div>
-      <div style="font-size:11px;color:rgba(200,160,255,.6);line-height:1.7;margin-bottom:18px">
-        Used only for AI chord lookup · Stored locally in your browser<br>
-        Get a free key at <span style="color:rgba(180,130,255,.8);font-family:monospace">console.anthropic.com</span>
-      </div>
-      <div id="track-apikey-error" style="display:none;font-size:11px;color:rgba(255,140,140,.85);margin-bottom:10px;padding:6px 10px;background:rgba(255,80,80,.08);border-radius:5px"></div>
-      <input id="track-apikey-input" type="password" placeholder="sk-ant-api03-…"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(180,80,255,.3);border-radius:7px;padding:9px 12px;color:#fff;font-size:12px;font-family:monospace;outline:none;margin-bottom:16px"
-        onkeydown="if(event.key==='Enter')saveApiKey()">
-      <div style="display:flex;gap:10px;justify-content:center">
-        <button onclick="hideApiKeyModal()"
-          style="background:rgba(255,80,120,.1);border:1px solid rgba(255,80,120,.25);color:rgba(255,180,200,.7);padding:8px 18px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit">Cancel</button>
-        <button onclick="saveApiKey()"
-          style="background:linear-gradient(135deg,rgba(180,80,255,.4),rgba(120,60,200,.4));border:1px solid rgba(200,120,255,.5);color:#fff;padding:8px 24px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit">Save &amp; Detect</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Audio analysis progress overlay ── -->
-  <div id="track-analysis-overlay" style="display:none;position:fixed;inset:0;z-index:250;background:rgba(5,1,15,.82);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;gap:14px">
-    <div style="font-size:34px">🎵</div>
-    <div style="font-size:15px;font-weight:600;color:#fff">Analyzing audio…</div>
-    <div style="width:260px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;height:5px">
-      <div id="track-analysis-bar" style="height:100%;background:linear-gradient(90deg,#a855f7,#ec4899);border-radius:6px;width:0%;transition:width .2s"></div>
-    </div>
-    <div id="track-analysis-pct" style="font-size:12px;color:rgba(200,160,255,.65)">0%</div>
-    <div style="font-size:10px;color:rgba(180,140,210,.4)">Pitch analysis running in browser · May take a few seconds</div>
-  </div>
-
 </div>
 
 <!-- ===== THEORY PANEL ===== -->
@@ -2450,12 +2293,6 @@ function setTab(t,btn){
   if(t!=='songmode'&&document.getElementById('panel-songmode').classList.contains('active')){
     stopSong();
   }
-  if(t!=='track'&&document.getElementById('panel-track').classList.contains('active')){
-    stopTrack();
-    if(typeof ytPlayerInst!=='undefined'&&ytPlayerInst){try{ytPlayerInst.destroy();}catch(e){}ytPlayerInst=null;}
-    if(typeof scWidgetInst!=='undefined') scWidgetInst=null;
-    if(typeof currentMediaPlatform!=='undefined') currentMediaPlatform=null;
-  }
   stopAllAudio();
   document.querySelectorAll('.htab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -2465,7 +2302,7 @@ function setTab(t,btn){
   
   // Hide header for Song Mode and Track Mode
   const header=document.querySelector('.header');
-  if(t==='songmode' || t==='track'){
+  if(t==='songmode'){
     header.classList.add('fullscreen-hidden');
   } else {
     header.classList.remove('fullscreen-hidden');
@@ -2487,10 +2324,7 @@ function setTab(t,btn){
   if(t==='theory'){
     initChordDecoder();
   }
-  if(t==='track'){
-    ensureYTApi();
-    setTimeout(()=>{renderTrackFeelBtns();drawTrackIdleRoll();_renderLookupCounter();},100);
-  }
+
 }
 function setInst(inst,btn){
   currentInst=inst;
@@ -2593,8 +2427,6 @@ function stopAllAudio(){
   stopProgression();
   // Stop Song Mode playback
   if(typeof melodicsPlaying!=='undefined' && melodicsPlaying) stopSong();
-  // Stop Track Mode playback
-  if(typeof trackPlaying!=='undefined' && trackPlaying) stopTrack();
 
   // Reset chord card play buttons
   if(chordStopTimeout){ clearTimeout(chordStopTimeout); chordStopTimeout=null; }
@@ -2611,19 +2443,42 @@ function stopAllAudio(){
 function showChordDetail(ct,rm,root){
   const nn=ct.intervals.map(i=>NOTE_NAMES[(rm+i)%12]);
   const d=document.getElementById('chord-detail');
-  d.dataset.lastChord = ct.name; // remember for instrument-switch refresh
+  d.dataset.lastChord = ct.name;
 
   const isStringInst = (currentInst === 'guitar' || currentInst === 'bass');
   const fretboardHTML = isStringInst ? `
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
       <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px">
-        ${currentInst==='bass'?'🎸':'🎸'} Fretboard — where to put your fingers
+        🎸 Fretboard — where to put your fingers
       </div>
       <div id="chord-fretboard" style="background:rgba(10,3,25,.4);border-radius:10px;padding:14px 10px"></div>
       <div id="chord-fretboard-legend"></div>
     </div>` : '';
 
-  d.innerHTML=`<div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px">${root}${ct.name==='maj'?'':ct.name} — How it's built</div><div class="formula-row" style="margin-bottom:10px">${ct.intervals.map((iv,i)=>`<span class="formula-pill ${PILL_COLORS[i]||'fp-root'}">${nn[i]}<br><span style="font-size:9px;opacity:.7">${INTERVAL_NAMES[iv]||iv}</span></span>`).join('')}</div><div style="font-size:11px;color:var(--text2)">${ct.desc} — ${CHORD_TIPS[ct.name]||''}</div>${fretboardHTML}`;
+  // Piano hand-position keyboard — shown for piano/Rhodes only
+  const isKeyboardInst = !isStringInst;
+  const handKbHTML = isKeyboardInst ? `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(180,80,255,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <div style="font-size:12px;font-weight:500;color:var(--text)">🎹 Where to place your hands</div>
+        <div style="display:flex;gap:10px;font-size:10px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#3ddc70;display:inline-block"></span>Left hand (LH)</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#c97fff;display:inline-block"></span>Right hand (RH)</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#ffb347;display:inline-block"></span>Both / optional</span>
+        </div>
+      </div>
+      <div id="chord-hand-kb" style="overflow-x:auto;padding-bottom:4px"></div>
+      <div id="chord-hand-tips" style="margin-top:10px;font-size:11px;color:rgba(200,160,255,.75);line-height:1.7"></div>
+    </div>` : '';
+
+  d.innerHTML=`
+    <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px">${root}${ct.name==='maj'?'':ct.name} — How it's built</div>
+    <div class="formula-row" style="margin-bottom:10px">
+      ${ct.intervals.map((iv,i)=>`<span class="formula-pill ${PILL_COLORS[i]||'fp-root'}">${nn[i]}<br><span style="font-size:9px;opacity:.7">${INTERVAL_NAMES[iv]||iv}</span></span>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text2)">${ct.desc} — ${CHORD_TIPS[ct.name]||''}</div>
+    ${handKbHTML}
+    ${fretboardHTML}`;
   d.classList.add('open');
 
   if(isStringInst){
@@ -2631,6 +2486,155 @@ function showChordDetail(ct,rm,root){
     renderFretboard('chord-fretboard', frets);
     renderFretboardLegend('chord-fretboard-legend');
   }
+  if(isKeyboardInst){
+    renderChordHandKeyboard('chord-hand-kb', 'chord-hand-tips', ct, rm);
+  }
+}
+
+// ── Chord hand-position keyboard ─────────────────────────────────────────
+// Renders a 2-octave keyboard centered on the chord root, highlighting
+// each note with a left-hand (green) or right-hand (purple) color and
+// the note name labeled on every key. Splits the chord into a practical
+// LH/RH assignment:
+//   LH: root (played in a lower octave as a bass note) + shell (3rd/7th)
+//   RH: everything else (5th, extensions: 7th, 9th, 13th)
+// This follows standard neo-soul/jazz piano practice — root in the left,
+// melody and extensions in the right.
+function renderChordHandKeyboard(kbId, tipsId, ct, rm){
+  const wrap = document.getElementById(kbId);
+  if(!wrap) return;
+  wrap.innerHTML = '';
+
+  // Build the set of chord note pitch classes
+  const chordMidis = ct.intervals.map(iv => rm + iv);
+  const rootClass = rm % 12;
+
+  // LH assignment: root + 3rd (index 0 and 1) — anchor and quality
+  // RH: 5th, 7th, 9th, and any higher extensions
+  // For simpler chords (triad only) LH gets root, RH gets 3rd + 5th
+  const lhIntervalIndices = ct.intervals.length <= 3
+    ? [0]           // triad: just root in LH
+    : [0, 1];       // 7th+ chords: root + 3rd/quality note in LH
+
+  const lhClasses = new Set(lhIntervalIndices.map(i => (rm + ct.intervals[i]) % 12));
+
+  // Build a 2-octave keyboard starting one octave below the root
+  const startMidi = rm - 4; // a few keys before root for visual context
+  const endMidi = startMidi + 24; // 2 octaves
+  const whites = [0,2,4,5,7,9,11];
+  const blackSemis = [1,3,6,8,10];
+  const wW = 28, wH = 90, bW = 18, bH = 56;
+
+  // Count visible white keys for container sizing
+  let whiteCount = 0;
+  for(let m = startMidi; m <= endMidi; m++){ if(whites.includes(m%12)) whiteCount++; }
+
+  const container = document.createElement('div');
+  container.style.cssText = `position:relative;height:${wH}px;width:${whiteCount*wW}px;min-width:${whiteCount*wW}px`;
+
+  let wx = 0;
+  for(let m = startMidi; m <= endMidi; m++){
+    const semi = m % 12;
+    if(!whites.includes(semi)) continue;
+    const noteClass = m % 12;
+    const inChord = lhClasses.has(noteClass) || chordMidis.some(cm => cm % 12 === noteClass);
+    const isLH = lhClasses.has(noteClass);
+    const isRoot = noteClass === rootClass && m >= rm - 1;
+
+    // Determine color + hand label
+    let bg, labelColor, handLabel = '';
+    if(isRoot){
+      bg = '#3ddc70'; labelColor = '#0a3020'; handLabel = 'LH';
+    } else if(isLH){
+      bg = '#52d090'; labelColor = '#0a2818'; handLabel = 'LH';
+    } else if(inChord){
+      bg = 'linear-gradient(180deg,#c97fff,#8040d0)'; labelColor = '#fff'; handLabel = 'RH';
+    } else {
+      bg = 'linear-gradient(180deg,#f0eaff,#d8cef0)'; labelColor = 'rgba(80,20,100,.35)';
+    }
+
+    const k = document.createElement('div');
+    k.style.cssText = `position:absolute;left:${wx*wW}px;top:0;width:${wW-1}px;height:${wH}px;` +
+      `border-radius:0 0 6px 6px;border:1px solid rgba(160,80,255,.2);cursor:pointer;z-index:1;` +
+      `background:${bg};display:flex;flex-direction:column;align-items:center;` +
+      `justify-content:flex-end;padding-bottom:6px;gap:2px;` +
+      (inChord ? `box-shadow:0 0 12px ${isLH?'rgba(60,220,100,.45)':'rgba(180,80,255,.45)'};` : '');
+    k.innerHTML = `
+      <span style="font-size:9px;font-weight:700;color:${labelColor}">${NOTE_NAMES[noteClass]}</span>
+      ${handLabel ? `<span style="font-size:7px;font-weight:600;color:${labelColor};opacity:.75">${handLabel}</span>` : ''}`;
+    k.onclick = () => { playNote(m, 0, 1.2); k.style.filter='brightness(1.3)'; setTimeout(()=>k.style.filter='',180); };
+    container.appendChild(k);
+
+    // Black key to the right if applicable
+    if([0,2,5,7,9].includes(semi)){
+      const bm = m + 1;
+      if(bm <= endMidi){
+        const bnoteClass = bm % 12;
+        const bInChord = chordMidis.some(cm => cm % 12 === bnoteClass);
+        const bIsLH = lhClasses.has(bnoteClass);
+        let bbg, blabelColor, bHandLabel = '';
+        if(bIsLH){
+          bbg = 'linear-gradient(180deg,#28a050,#168040)'; blabelColor='rgba(255,255,255,.9)'; bHandLabel='LH';
+        } else if(bInChord){
+          bbg = 'linear-gradient(180deg,#a060e0,#6020b0)'; blabelColor='rgba(255,255,255,.9)'; bHandLabel='RH';
+        } else {
+          bbg = 'linear-gradient(180deg,#1a0030,#2a0848)'; blabelColor='rgba(180,100,255,.3)';
+        }
+        const bk = document.createElement('div');
+        bk.style.cssText = `position:absolute;left:${wx*wW+wW-Math.floor(bW/2)}px;top:0;width:${bW}px;height:${bH}px;` +
+          `border-radius:0 0 4px 4px;cursor:pointer;z-index:2;background:${bbg};` +
+          `display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:4px;gap:2px;` +
+          (bInChord ? `box-shadow:0 0 8px ${bIsLH?'rgba(60,200,80,.5)':'rgba(160,80,255,.5)'};` : '');
+        bk.innerHTML = bInChord
+          ? `<span style="font-size:8px;font-weight:700;color:${blabelColor}">${NOTE_NAMES[bnoteClass]}</span>
+             <span style="font-size:6px;color:${blabelColor};opacity:.8">${bHandLabel}</span>`
+          : '';
+        bk.onclick = () => { playNote(bm, 0, 1.2); };
+        container.appendChild(bk);
+      }
+    }
+    wx++;
+  }
+  wrap.appendChild(container);
+
+  // Hand tips text
+  const tipsEl = document.getElementById(tipsId);
+  if(tipsEl){
+    const lhNotes = ct.intervals.filter((_,i)=>lhIntervalIndices.includes(i)).map(iv=>NOTE_NAMES[(rm+iv)%12]);
+    const rhNotes = ct.intervals.filter((_,i)=>!lhIntervalIndices.includes(i)).map(iv=>NOTE_NAMES[(rm+iv)%12]);
+    const lhStr = lhNotes.join(' + ');
+    const rhStr = rhNotes.join(' + ');
+    const tips = getChordHandTips(ct.name);
+    tipsEl.innerHTML = `
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">
+        <div><span style="color:#3ddc70;font-weight:600">LH:</span> ${lhStr} — play an octave lower for bass weight</div>
+        <div><span style="color:#c97fff;font-weight:600">RH:</span> ${rhStr || 'melody / solo notes'} — upper voicing</div>
+      </div>
+      ${tips ? `<div style="color:rgba(200,160,255,.7)">${tips}</div>` : ''}`;
+  }
+}
+
+// Short practical tip per chord type — the kind of advice a teacher would give
+function getChordHandTips(chordName){
+  const tips = {
+    maj:   "Triad: LH plays root alone (lower octave), RH plays 3rd + 5th. Classic two-hand split.",
+    m:     "Minor triad: same split as major. LH root, RH plays the b3 + 5th. The b3 is what makes it feel dark.",
+    '7':   "Dominant 7: LH holds root + 3rd (shell), RH adds the b7. This is the blues/R&B workhorse chord.",
+    maj7:  "Maj7: LH root + 3rd, RH 5th + maj7. Let the major 7th ring — it's the 'floating' note.",
+    m7:    "Min7: LH root + b3 (shell voicing), RH 5th + b7. Drop the 5th from RH to make space in a mix.",
+    '9':   "Dom9: LH root + 3rd, RH b7 + 9th. The 9th on top gives that soulful bounce.",
+    maj9:  "Maj9: LH root + 3rd, RH maj7 + 9th. This is the signature neo-soul lush sound — let it breathe.",
+    m9:    "Min9: LH root + b3, RH b7 + 9th. The 9th lifts a minor chord out of sadness into something wistful.",
+    '13':  "Dom13: LH root + 3rd, RH b7 + 9th + 13th. In a band context, LH can just play root alone — the band fills the rest.",
+    dim:   "Diminished: LH root + b3, RH b5. All minor 3rds — symmetrical and tense.",
+    dim7:  "Dim7: LH root + b3, RH b5 + dim7. Symmetric — each note is 3 semitones apart. Try inverting it.",
+    m7b5:  "Half-dim (ø7): LH root + b3, RH b5 + b7. The ii chord in minor-key jazz (ii-V-i in minor).",
+    sus2:  "Sus2: LH root, RH 2nd + 5th. No 3rd — very open and ambiguous. Common in pop and neo-soul intros.",
+    sus4:  "Sus4: LH root, RH 4th + 5th. Wants to resolve down to the 3rd — try playing sus4 then maj.",
+    add9:  "Add9: LH root + 3rd, RH 5th + 9th (no 7th). Brighter than a maj9. Common in pop piano.",
+    '6':   "Maj6: LH root + 3rd, RH 5th + 6th. Warm vintage sound — classic bossa nova and jazz ballad chord.",
+  };
+  return tips[chordName] || '';
 }
 
 // ── Guitar/Bass live input mode ───────────────────────────────────────────
@@ -3142,1279 +3146,6 @@ function renderSongModeFeel(){
 // ============================================================
 // TRACK MODE
 // ============================================================
-let trackPlaying=false, trackToken={cancelled:true}, trackAnimFrame=null;
-let trackNoteBlocks=[], trackCurrentChordIdx=-1;
-let trackChordList=[]; // [{root,type}]
-let trackBpm=80, trackFeel='straight';
-let trackVideoId='';
-let currentMediaPlatform=null; // 'youtube'|'spotify'|'soundcloud'
-let scWidgetInst=null;
-
-const TRACK_COLORS=['#ff7eb3','#a78bfa','#34d399','#60a5fa','#fb923c','#f472b6','#4ade80','#818cf8'];
-const TRACK_FEELS=[
-  {id:'straight',label:'Straight'},{id:'moonchild',label:'Moonchild'},
-  {id:'glasper',label:'Glasper'},{id:'billevans',label:'Bill Evans'},
-  {id:'erykah',label:'Erykah'},{id:'premo',label:'Premo'},
-  {id:'daftpunk',label:'Daft Punk'},{id:'amapiano',label:'Amapiano'},
-];
-
-// ── Platform detection ────────────────────────────────────────────────────
-function detectPlatform(url){
-  const yt=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-  if(yt) return{platform:'youtube',id:yt[1]};
-  const sp=url.match(/open\.spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/);
-  if(sp) return{platform:'spotify',type:sp[1],id:sp[2],url};
-  if(/soundcloud\.com\/[^/?#]+\/[^/?#]+/.test(url)) return{platform:'soundcloud',url};
-  return null;
-}
-
-// ── YouTube IFrame API ────────────────────────────────────────────────────
-let ytApiReady=false, ytPlayerInst=null, ytPendingVideoId=null;
-function ensureYTApi(){
-  if(window.YT&&window.YT.Player){ytApiReady=true;return;}
-  if(document.getElementById('yt-iframe-api-script'))return;
-  const s=document.createElement('script');
-  s.id='yt-iframe-api-script';
-  s.src='https://www.youtube.com/iframe_api';
-  document.head.appendChild(s);
-}
-window.onYouTubeIframeAPIReady=function(){
-  ytApiReady=true;
-  if(ytPendingVideoId){_createYTPlayer(ytPendingVideoId);ytPendingVideoId=null;}
-};
-function _createYTPlayer(videoId){
-  if(!ytApiReady){ytPendingVideoId=videoId;return;}
-  const wrap=document.getElementById('track-yt-wrap');
-  wrap.innerHTML='';
-  document.getElementById('track-hint').style.display='none';
-  const div=document.createElement('div');
-  div.id='yt-player-div';
-  div.style.cssText='width:100%;height:100%;border-radius:10px;overflow:hidden';
-  wrap.appendChild(div);
-  if(ytPlayerInst){try{ytPlayerInst.destroy();}catch(e){}ytPlayerInst=null;}
-  ytPlayerInst=new YT.Player('yt-player-div',{
-    videoId,width:'100%',height:'100%',
-    playerVars:{playsinline:1,rel:0,modestbranding:1,enablejsapi:1},
-    events:{
-      onReady(){
-        const iframe=wrap.querySelector('iframe');
-        if(iframe)iframe.style.cssText='width:100%;height:100%;border:none;border-radius:10px';
-      },
-      onError(e){
-        let reason='This video cannot be played here.';
-        if(e.data===2)reason='Invalid video ID.';
-        else if(e.data===100)reason='Video not found or is private.';
-        else if(e.data===101||e.data===150)reason='The owner of this video has disabled embedding.';
-        else if(e.data===5)reason='This video cannot play in your browser.';
-        _showYTError(videoId,reason);
-      },
-    },
-  });
-}
-function _showYTError(videoId,reason){
-  if(ytPlayerInst){try{ytPlayerInst.destroy();}catch(e){}ytPlayerInst=null;}
-  const wrap=document.getElementById('track-yt-wrap');
-  wrap.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-    height:100%;gap:14px;padding:24px;text-align:center;
-    background:rgba(255,100,100,.07);border:1px solid rgba(255,100,100,.25);border-radius:10px">
-    <div style="font-size:28px">🚫</div>
-    <div style="color:rgba(255,180,180,.9);font-size:13px;font-weight:500">${reason}</div>
-    <div style="color:rgba(255,255,255,.45);font-size:11px">Try the same song on <strong>Spotify</strong> or <strong>SoundCloud</strong> instead —<br>paste that URL above and click Load.</div>
-    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener"
-      style="margin-top:4px;padding:9px 18px;background:rgba(255,0,0,.75);color:#fff;
-        border-radius:6px;text-decoration:none;font-size:12px;font-weight:600"
-      onmouseover="this.style.background='rgba(220,0,0,.9)'"
-      onmouseout="this.style.background='rgba(255,0,0,.75)'">▶ Open in YouTube →</a>
-  </div>`;
-}
-
-// ── Spotify embed ─────────────────────────────────────────────────────────
-function _embedSpotify(type,id){
-  const wrap=document.getElementById('track-yt-wrap');
-  document.getElementById('track-hint').style.display='none';
-  wrap.innerHTML=`<iframe id="spotify-player-iframe"
-    src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0"
-    width="100%" height="100%"
-    style="border:none;border-radius:12px;min-height:160px"
-    allow="autoplay;clipboard-write;encrypted-media;fullscreen;picture-in-picture"
-    loading="lazy"></iframe>`;
-}
-
-// ── SoundCloud embed ──────────────────────────────────────────────────────
-let scApiLoaded=false;
-function ensureSCApi(){
-  if(window.SC){scApiLoaded=true;return;}
-  if(document.getElementById('sc-widget-api-script'))return;
-  const s=document.createElement('script');
-  s.id='sc-widget-api-script';
-  s.src='https://w.soundcloud.com/player/api.js';
-  s.onload=()=>{scApiLoaded=true;};
-  document.head.appendChild(s);
-}
-function _embedSoundCloud(scUrl){
-  ensureSCApi();
-  const wrap=document.getElementById('track-yt-wrap');
-  document.getElementById('track-hint').style.display='none';
-  const enc=encodeURIComponent(scUrl);
-  wrap.innerHTML=`<iframe id="sc-player-iframe"
-    src="https://w.soundcloud.com/player/?url=${enc}&color=%23a855f7&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true"
-    width="100%" height="100%"
-    style="border:none;border-radius:12px"
-    allow="autoplay"></iframe>`;
-  setTimeout(()=>{
-    if(window.SC){
-      const iframe=document.getElementById('sc-player-iframe');
-      if(iframe)scWidgetInst=SC.Widget(iframe);
-    }
-  },1200);
-}
-
-// ── Universal media control ───────────────────────────────────────────────
-function mediaCmd(cmd){
-  if(currentMediaPlatform==='youtube'){
-    if(!ytPlayerInst)return;
-    try{
-      if(cmd==='play')ytPlayerInst.playVideo();
-      else if(cmd==='pause')ytPlayerInst.pauseVideo();
-      else if(cmd==='stop')ytPlayerInst.stopVideo();
-    }catch(e){}
-  } else if(currentMediaPlatform==='spotify'){
-    const iframe=document.getElementById('spotify-player-iframe');
-    if(!iframe)return;
-    try{iframe.contentWindow.postMessage({command:cmd==='play'?'play':'pause'},'*');}catch(e){}
-  } else if(currentMediaPlatform==='soundcloud'){
-    if(!scWidgetInst)return;
-    try{if(cmd==='play')scWidgetInst.play();else scWidgetInst.pause();}catch(e){}
-  }
-}
-
-// ── Load URL (all platforms) ──────────────────────────────────────────────
-async function loadTrackUrl(){
-  const input=document.getElementById('track-url-input');
-  const url=input.value.trim();
-  const info=document.getElementById('track-song-info');
-  info.style.display='flex';
-  document.getElementById('track-title').textContent='Loading…';
-  document.getElementById('track-artist').textContent='';
-  document.getElementById('track-load-msg').textContent='';
-
-  const det=detectPlatform(url);
-  if(!det){
-    document.getElementById('track-title').textContent='';
-    document.getElementById('track-artist').textContent='Paste a YouTube, Spotify, or SoundCloud link';
-    return;
-  }
-  currentMediaPlatform=det.platform;
-
-  if(det.platform==='youtube'){
-    trackVideoId=det.id;
-    try{
-      const r=await fetch('https://www.youtube.com/oembed?url='+encodeURIComponent('https://www.youtube.com/watch?v='+det.id)+'&format=json');
-      const d=await r.json();
-      document.getElementById('track-title').textContent=d.title||'Track';
-      document.getElementById('track-artist').textContent=d.author_name||'';
-      document.getElementById('track-load-msg').textContent='· YouTube';
-    }catch(e){
-      document.getElementById('track-title').textContent='YouTube Track';
-      document.getElementById('track-load-msg').textContent='';
-    }
-    _createYTPlayer(det.id);
-
-  } else if(det.platform==='spotify'){
-    try{
-      const r=await fetch('https://open.spotify.com/oembed?url='+encodeURIComponent(url));
-      const d=await r.json();
-      document.getElementById('track-title').textContent=d.title||'Spotify Track';
-      document.getElementById('track-artist').textContent='';
-      document.getElementById('track-load-msg').textContent='· Spotify';
-    }catch(e){
-      document.getElementById('track-title').textContent='Spotify Track';
-      document.getElementById('track-load-msg').textContent='· Spotify';
-    }
-    _embedSpotify(det.type,det.id);
-
-  } else if(det.platform==='soundcloud'){
-    try{
-      const r=await fetch('https://soundcloud.com/oembed?url='+encodeURIComponent(url)+'&format=json');
-      const d=await r.json();
-      document.getElementById('track-title').textContent=d.title||'SoundCloud Track';
-      document.getElementById('track-artist').textContent=d.author_name||'';
-      document.getElementById('track-load-msg').textContent='· SoundCloud';
-    }catch(e){
-      document.getElementById('track-title').textContent='SoundCloud Track';
-      document.getElementById('track-load-msg').textContent='· SoundCloud';
-    }
-    _embedSoundCloud(url);
-  }
-}
-
-// ── AI chord detection ────────────────────────────────────────────────────
-let anthropicApiKey=localStorage.getItem('chordlab-api-key')||'';
-let _apiKeyCallback=null;
-
-// Lookup cost tracking (~$0.001 per lookup — Haiku estimate, rounded up for safety)
-const LOOKUP_COST_EST=0.001;
-let _lookupCount=parseInt(localStorage.getItem('chordlab-lookup-count')||'0');
-let _lookupCostTotal=parseFloat(localStorage.getItem('chordlab-lookup-cost')||'0');
-
-function _renderLookupCounter(){
-  const el=document.getElementById('track-lookup-counter');
-  if(!el) return;
-  if(_lookupCount===0){el.textContent='';return;}
-  el.textContent=_lookupCount+' lookup'+(_lookupCount!==1?'s':'')+' used · ~$'+_lookupCostTotal.toFixed(3)+' spent';
-}
-function _incrementLookupCounter(){
-  _lookupCount++;
-  _lookupCostTotal=parseFloat((_lookupCount*LOOKUP_COST_EST).toFixed(4));
-  localStorage.setItem('chordlab-lookup-count',_lookupCount);
-  localStorage.setItem('chordlab-lookup-cost',_lookupCostTotal.toFixed(4));
-  _renderLookupCounter();
-}
-
-function showApiKeyModal(cb,errMsg){
-  _apiKeyCallback=cb||null;
-  const modal=document.getElementById('track-apikey-modal');
-  const errEl=document.getElementById('track-apikey-error');
-  const inp=document.getElementById('track-apikey-input');
-  inp.value=anthropicApiKey||'';
-  if(errMsg){errEl.textContent=errMsg;errEl.style.display='block';}
-  else errEl.style.display='none';
-  modal.style.display='flex';
-  setTimeout(()=>inp.focus(),80);
-}
-function hideApiKeyModal(){
-  document.getElementById('track-apikey-modal').style.display='none';
-  _apiKeyCallback=null;
-}
-function saveApiKey(){
-  const val=document.getElementById('track-apikey-input').value.trim();
-  if(!val){
-    const e=document.getElementById('track-apikey-error');
-    e.textContent='Please enter your API key.';e.style.display='block';return;
-  }
-  anthropicApiKey=val;
-  localStorage.setItem('chordlab-api-key',val);
-  hideApiKeyModal();
-  if(_apiKeyCallback) _apiKeyCallback();
-}
-
-function showDetectBar(msg){
-  document.getElementById('track-detect-msg').textContent=msg;
-  document.getElementById('track-detect-bar').style.display='flex';
-}
-
-async function autoDetectChords(){
-  const title=document.getElementById('track-title').textContent.trim();
-  const artist=document.getElementById('track-artist').textContent.trim();
-  const hasTrack=title&&title!=='Loading…';
-
-  if(!anthropicApiKey){
-    showApiKeyModal(hasTrack?()=>autoDetectChords():null);
-    return;
-  }
-  if(!hasTrack){
-    // No URL loaded — go straight to audio file
-    document.getElementById('track-audio-file').click();
-    return;
-  }
-
-  const btn=document.getElementById('track-detect-btn');
-  btn.textContent='⏳…';btn.disabled=true;
-  document.getElementById('track-detect-bar').style.display='none';
-
-  try{
-    const chords=await _fetchAIChords(title,artist);
-    if(chords){
-      _incrementLookupCounter();
-      trackChordList=chords.chords;
-      renderTrackChordList();
-      drawTrackIdleRoll();
-      const parts=[];
-      if(chords.key) parts.push('Key of '+chords.key);
-      if(chords.notes) parts.push(chords.notes);
-      if(parts.length) document.getElementById('track-load-msg').textContent='· '+parts.join(' — ');
-    } else {
-      showDetectBar('AI doesn\'t have chord data for this track — upload the audio file to analyze it.');
-    }
-  }catch(e){
-    if(e.message==='bad-key'){
-      showApiKeyModal(()=>autoDetectChords(),'Invalid API key — please re-enter it.');
-    } else {
-      showDetectBar('AI unavailable ('+e.message+'). Upload an audio file to analyze chords instead.');
-    }
-  }finally{
-    btn.textContent='✨ Detect chords';btn.disabled=false;
-  }
-}
-
-async function _fetchAIChords(title,artist){
-  const songRef=artist?`"${title}" by ${artist}`:`"${title}"`;
-  const prompt=`What chord progression is used in the song ${songRef}?\n\nReturn ONLY a JSON object:\n{\n  "key": "C",\n  "chords": [\n    {"root":"C","type":"maj7"},\n    {"root":"F","type":"maj7"}\n  ],\n  "notes": "one sentence about the progression"\n}\n\nAllowed chord types: maj m 7 maj7 m7 9 maj9 m9 add9 sus4 dim m7b5\nAllowed roots: C C# D Eb E F F# G Ab A Bb B\nIf you genuinely don't know this specific song, return: {"error":"unknown"}\nReturn ONLY the JSON, no other text.`;
-
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'x-api-key':anthropicApiKey,
-      'anthropic-version':'2023-06-01',
-      'content-type':'application/json',
-      'anthropic-dangerous-direct-browser-access':'true',
-    },
-    body:JSON.stringify({
-      model:'claude-haiku-4-5-20251001',
-      max_tokens:512,
-      messages:[{role:'user',content:prompt}],
-    }),
-  });
-
-  if(res.status===401){throw new Error('bad-key');}
-  if(!res.ok){throw new Error('HTTP '+res.status);}
-
-  const data=await res.json();
-  const text=data.content[0].text.trim();
-  const match=text.match(/\{[\s\S]*\}/);
-  if(!match) throw new Error('No JSON in response');
-  const parsed=JSON.parse(match[0]);
-  if(parsed.error==='unknown') return null;
-  if(!Array.isArray(parsed.chords)||!parsed.chords.length) throw new Error('Empty chord list');
-
-  // Sanitize roots and types
-  const VALID_ROOTS=new Set(['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']);
-  const ROOT_ALT={'Db':'C#','D#':'Eb','E#':'F','Fb':'E','G#':'Ab','A#':'Bb','B#':'C','Cb':'B','Gb':'F#'};
-  const VALID_TYPES=new Set(['maj','m','7','maj7','m7','9','maj9','m9','add9','sus4','dim','m7b5']);
-  const TYPE_ALT={'major':'maj','minor':'m','dominant7':'7','dom7':'7','minor7':'m7','major7':'maj7',
-    'diminished':'dim','min':'m','dominant':'7','halfdiminished':'m7b5','suspended4':'sus4'};
-
-  parsed.chords=parsed.chords.map(c=>{
-    let root=ROOT_ALT[c.root]||c.root;
-    if(!VALID_ROOTS.has(root)) root='C';
-    let type=TYPE_ALT[c.type]||c.type;
-    if(!VALID_TYPES.has(type)) type='maj';
-    return{root,type};
-  });
-  return parsed;
-}
-
-// ── Audio chord analysis (Goertzel + chroma + template matching) ──────────
-
-// Pitch class frequencies across octaves 2-7
-const _CHROMA_FREQS=(()=>{
-  const f=Array.from({length:12},()=>[]);
-  for(let oct=2;oct<=7;oct++){
-    for(let pc=0;pc<12;pc++){
-      const midi=(oct+1)*12+pc;
-      const freq=440*Math.pow(2,(midi-69)/12);
-      if(freq>=60&&freq<=5000) f[pc].push(freq);
-    }
-  }
-  return f;
-})();
-
-function _goertzel(signal,freq,sr){
-  const omega=2*Math.PI*freq/sr;
-  const coeff=2*Math.cos(omega);
-  let s1=0,s2=0;
-  for(let i=0;i<signal.length;i++){
-    const s0=signal[i]+coeff*s1-s2;
-    s2=s1;s1=s0;
-  }
-  return s1*s1+s2*s2-coeff*s1*s2;
-}
-
-function _computeChroma(frame,sr){
-  const ch=new Float32Array(12);
-  for(let pc=0;pc<12;pc++){
-    for(const freq of _CHROMA_FREQS[pc]) ch[pc]+=_goertzel(frame,freq,sr);
-  }
-  const sum=ch.reduce((a,b)=>a+b,0);
-  if(sum>0) for(let i=0;i<12;i++) ch[i]/=sum;
-  return ch;
-}
-
-const _CHORD_TMPL=[
-  {type:'maj', t:[1,0,0,0,1,0,0,1,0,0,0,0]},
-  {type:'m',   t:[1,0,0,1,0,0,0,1,0,0,0,0]},
-  {type:'7',   t:[1,0,0,0,1,0,0,1,0,0,1,0]},
-  {type:'maj7',t:[1,0,0,0,1,0,0,1,0,0,0,1]},
-  {type:'m7',  t:[1,0,0,1,0,0,0,1,0,0,1,0]},
-  {type:'dim', t:[1,0,0,1,0,0,1,0,0,0,0,0]},
-  {type:'sus4',t:[1,0,0,0,0,1,0,1,0,0,0,0]},
-  {type:'add9',t:[1,0,1,0,1,0,0,1,0,0,0,0]},
-];
-const _NOTE_PC=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
-
-function _matchChord(chroma){
-  let best={score:-1,root:0,type:'maj'};
-  for(let r=0;r<12;r++){
-    for(const{type,t}of _CHORD_TMPL){
-      let s=0;
-      for(let i=0;i<12;i++) s+=chroma[i]*t[(i-r+12)%12];
-      if(s>best.score) best={score:s,root:r,type};
-    }
-  }
-  return{root:_NOTE_PC[best.root],type:best.type};
-}
-
-function _smoothChords(frames){
-  const merged=[];
-  for(const f of frames){
-    const lbl=f.root+f.type;
-    if(merged.length&&merged[merged.length-1].lbl===lbl){
-      merged[merged.length-1].end=f.t;
-    } else {
-      merged.push({root:f.root,type:f.type,lbl,start:f.t,end:f.t});
-    }
-  }
-  // Remove segments shorter than 0.4s, then collapse consecutive duplicates after filtering
-  const filtered=merged.filter(c=>c.end-c.start>=0.4);
-  const out=[];
-  for(const c of filtered){
-    if(out.length&&out[out.length-1].lbl===c.lbl) out[out.length-1].end=c.end;
-    else out.push(c);
-  }
-  return out;
-}
-
-async function analyzeAudioFile(file){
-  if(!file) return;
-  // Reset file input so the same file can be picked again
-  document.getElementById('track-audio-file').value='';
-
-  // Show progress overlay
-  const overlay=document.getElementById('track-analysis-overlay');
-  const bar=document.getElementById('track-analysis-bar');
-  const pct=document.getElementById('track-analysis-pct');
-  overlay.style.display='flex';
-  bar.style.width='0%';pct.textContent='0%';
-
-  try{
-    const arrayBuf=await file.arrayBuffer();
-    const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    const audioBuf=await audioCtx.decodeAudioData(arrayBuf);
-    audioCtx.close();
-
-    // Mono mix
-    let data=audioBuf.getChannelData(0);
-    if(audioBuf.numberOfChannels>1){
-      const ch2=audioBuf.getChannelData(1);
-      const mono=new Float32Array(data.length);
-      for(let i=0;i<data.length;i++) mono[i]=(data[i]+ch2[i])*0.5;
-      data=mono;
-    }
-
-    // Downsample 2x for speed (22050 Hz is enough for chord detection up to 5kHz)
-    let sr=audioBuf.sampleRate;
-    if(sr>22050){
-      const ds=new Float32Array(Math.floor(data.length/2));
-      for(let i=0;i<ds.length;i++) ds[i]=data[i*2];
-      data=ds; sr=Math.floor(sr/2);
-    }
-
-    const frameSize=Math.floor(sr*0.5); // 0.5s window
-    const hopSize=Math.floor(sr*0.25);  // 0.25s hop
-    const totalFrames=Math.floor((data.length-frameSize)/hopSize);
-    const rawResults=[];
-
-    for(let i=0;i*hopSize+frameSize<data.length;i++){
-      const frame=data.subarray(i*hopSize,i*hopSize+frameSize);
-      const chroma=_computeChroma(frame,sr);
-      const chord=_matchChord(chroma);
-      rawResults.push({t:i*hopSize/sr,...chord});
-
-      if(i%8===0){
-        const p=Math.round(i/totalFrames*100);
-        bar.style.width=p+'%';pct.textContent=p+'%';
-        await new Promise(r=>setTimeout(r,0)); // yield to UI
-      }
-    }
-
-    bar.style.width='100%';pct.textContent='100%';
-    await new Promise(r=>setTimeout(r,120));
-
-    const chords=_smoothChords(rawResults);
-
-    if(!chords.length){
-      overlay.style.display='none';
-      showDetectBar('No chords detected — try a cleaner recording with less noise.');
-      return;
-    }
-
-    // Deduplicate: keep ordered unique chords (first occurrence of each root+type)
-    const seen=new Set();
-    const unique=[];
-    for(const c of chords){
-      if(!seen.has(c.lbl)){seen.add(c.lbl);unique.push({root:c.root,type:c.type});}
-    }
-
-    trackChordList=unique.slice(0,12); // max 12 unique chords
-    renderTrackChordList();
-    drawTrackIdleRoll();
-    document.getElementById('track-detect-bar').style.display='none';
-    document.getElementById('track-load-msg').textContent=
-      '· Detected '+chords.length+' chord segment'+(chords.length!==1?'s':'')+' · '+unique.length+' unique';
-
-  }catch(e){
-    showDetectBar('Audio analysis failed: '+e.message);
-  }finally{
-    overlay.style.display='none';
-  }
-}
-
-// ── Chord builder ─────────────────────────────────────────────────────────
-const NOTE_TO_MIDI_OFFSET={'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11};
-function buildTrackProgChords(){
-  return trackChordList.map((tc,i)=>{
-    const rootOffset=NOTE_TO_MIDI_OFFSET[tc.root]??0;
-    const rootMidi=60+rootOffset;
-    const ct=CHORD_TYPES.find(c=>c.name===tc.type)||CHORD_TYPES[0];
-    return{
-      label:tc.root+(tc.type==='maj'?'':tc.type),
-      typeLabel:ct.label, numStr:(i+1).toString(),
-      midis:ct.intervals.map(iv=>rootMidi+iv),
-      color:TRACK_COLORS[i%TRACK_COLORS.length],
-    };
-  });
-}
-function addTrackChord(root,type){
-  if(trackChordList.length>=8)return;
-  trackChordList.push({root,type});
-  renderTrackChordList();
-  drawTrackIdleRoll();
-}
-function removeTrackChord(idx){
-  trackChordList.splice(idx,1);
-  renderTrackChordList();
-  drawTrackIdleRoll();
-}
-function renderTrackChordList(){
-  const cont=document.getElementById('track-chord-list');if(!cont)return;
-  cont.innerHTML='';
-  trackChordList.forEach((tc,i)=>{
-    const c=TRACK_COLORS[i%TRACK_COLORS.length];
-    const d=document.createElement('div');
-    d.style.cssText=`display:inline-flex;align-items:center;gap:4px;background:${c}1a;border:1px solid ${c}55;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;color:#fff`;
-    d.innerHTML=`<span>${tc.root}${tc.type==='maj'?'':tc.type}</span><button onclick="removeTrackChord(${i})" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;padding:0;font-size:15px;line-height:1;margin-left:2px">×</button>`;
-    cont.appendChild(d);
-  });
-}
-
-// ── Feel buttons ──────────────────────────────────────────────────────────
-function renderTrackFeelBtns(){
-  const cont=document.getElementById('track-feel-btns');if(!cont)return;
-  cont.innerHTML='';
-  TRACK_FEELS.forEach(f=>{
-    const btn=document.createElement('button');
-    btn.className='feel-btn'+(f.id===trackFeel?' active':'');
-    btn.textContent=f.label;
-    btn.style.cssText='padding:3px 9px;font-size:10px';
-    btn.onclick=()=>{
-      trackFeel=f.id;
-      cont.querySelectorAll('.feel-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-    };
-    cont.appendChild(btn);
-  });
-}
-
-// ── Canvas + animation ────────────────────────────────────────────────────
-function getTrackLayout(){
-  const c=document.getElementById('track-canvas');
-  if(!c||!c.offsetWidth)return{W:0,H:0,ctx:null};
-  const W=c.offsetWidth,H=c.offsetHeight;
-  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;
-  const ctx=c.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
-  return{W,H,ctx};
-}
-function drawTrackIdleRoll(){
-  const{W,H,ctx}=getTrackLayout();if(!ctx)return;
-  const chords=buildTrackProgChords();
-  ctx.clearRect(0,0,W,H);
-  if(!chords.length){
-    ctx.fillStyle='rgba(180,140,220,.2)';ctx.font='13px system-ui';ctx.textAlign='center';
-    ctx.fillText('Add chords above, then hit Play',W/2,H/2);
-    return;
-  }
-  const hitY=H*0.78;
-  document.getElementById('track-hit-line').style.top=hitY+'px';
-  ctx.strokeStyle='rgba(100,180,255,.06)';ctx.lineWidth=1;
-  const cols=chords.length,colW=W/cols;
-  for(let c=0;c<=cols;c++){ctx.beginPath();ctx.moveTo(c*colW,0);ctx.lineTo(c*colW,H);ctx.stroke();}
-  for(let r=0;r<8;r++){ctx.beginPath();ctx.moveTo(0,r*H/8);ctx.lineTo(W,r*H/8);ctx.stroke();}
-  const blockH=hitY*0.18;
-  chords.forEach((ch,i)=>{
-    const x=i*colW+6,w=colW-12,y=hitY-blockH-8;
-    ctx.fillStyle=ch.color+'44';roundRect(ctx,x,y,w,blockH,6);ctx.fill();
-    ctx.strokeStyle=ch.color+'bb';ctx.lineWidth=1.5;roundRect(ctx,x,y,w,blockH,6);ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='bold 13px system-ui';ctx.textAlign='center';
-    ctx.fillText(ch.label,x+w/2,y+blockH/2+4);
-    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='10px system-ui';
-    ctx.fillText(ch.typeLabel,x+w/2,y+blockH/2+17);
-    ctx.textAlign='left';
-  });
-}
-function exitTrackMode(){
-  setTab('chords',document.querySelector('.htab'));
-}
-function stopTrack(){
-  trackPlaying=false;if(trackToken)trackToken.cancelled=true;
-  if(trackAnimFrame)cancelAnimationFrame(trackAnimFrame);
-  trackNoteBlocks=[];trackCurrentChordIdx=-1;
-  const pb=document.getElementById('track-play-btn');if(pb)pb.textContent='▶ Play';
-  const bd=document.getElementById('track-beat-display');if(bd)bd.textContent='—';
-  const cn=document.getElementById('track-chord-name');if(cn)cn.style.opacity=0;
-  const ct=document.getElementById('track-chord-type');if(ct)ct.style.opacity=0;
-  mediaCmd('pause');
-  drawTrackIdleRoll();
-}
-function toggleTrackPlay(){
-  if(trackPlaying){stopTrack();return;}
-  if(!buildTrackProgChords().length)return;
-  startTrack();
-}
-function startTrack(){
-  const chords=buildTrackProgChords();
-  if(!chords.length)return;
-  trackPlaying=true;trackToken={cancelled:false};
-  const token=trackToken;
-  const pb=document.getElementById('track-play-btn');if(pb)pb.textContent='⏸ Pause';
-  ensureToneStarted();
-  const{W,H}=getTrackLayout();
-  const hitY=H*0.78;
-  document.getElementById('track-hit-line').style.top=hitY+'px';
-  const spb=60/trackBpm,spChord=spb*2;
-  const feel=FEELS[trackFeel]||FEELS.straight;
-  const totalDur=chords.length*spChord,cols=chords.length,colW=W/cols;
-  const blockH=Math.max(40,hitY*0.18);
-  const songInst=currentInst+'-'+currentSubInst;
-  const isPianoGrand=(songInst==='piano-grand');
-  const soundDur=isPianoGrand?spChord*0.88:Math.max(0.08,spChord*0.38);
-  const noteDur=isPianoGrand?spChord*1.3:Math.max(0.38,spChord*0.48);
-  const audioLatency=Math.min((Tone.context.rawContext.outputLatency||0)+(Tone.context.rawContext.baseLatency||0),0.25);
-  const VLEAD=1.2;
-  const audioStart=Tone.now()+VLEAD,toneOrigin=Tone.now();
-  // Start media player
-  mediaCmd('play');
-  // Schedule audio
-  trackNoteBlocks=[];
-  feel.forEach(hit=>{
-    chords.forEach((ch,ci)=>{
-      const hitTimeSec=ci*spChord+(hit.b/16)*spChord;
-      const swingOff=hit.b%2===1?swingAmt*(spb/4):0;
-      const audioTime=audioStart+hitTimeSec+swingOff;
-      ch.midis.forEach((m,mi)=>{
-        const noteName=midiToToneName(m);
-        const toneTime=audioTime+mi*0.018;
-        const v=hit.v*0.82,dur=soundDur;
-        ensureToneStarted().then(()=>{
-          const inst=currentInst+'-'+currentSubInst;
-          if(inst==='piano-grand'&&samplerReady&&pianoSampler) pianoSampler.triggerAttackRelease(noteName,dur,toneTime,v*0.9);
-          else if(inst==='piano-grand'){if(!samplerLoading)loadPianoSampler();playPhysicsPiano(m,toneTime,dur,v*0.85);}
-          else if(inst==='piano-rhodes') getRhodesSynth().triggerAttackRelease(noteName,dur,toneTime,v*0.7);
-          else if(currentInst==='guitar') getGuitarSynth().triggerAttackRelease(noteName,dur,toneTime,v);
-          else if(currentInst==='bass') getBassSynth().triggerAttackRelease(midiToToneName(m-12),dur,toneTime,v);
-          else getRichPianoSynth().triggerAttackRelease(noteName,dur,toneTime,v*0.85);
-        });
-      });
-      trackNoteBlocks.push({ci,x:ci*colW+5,w:colW-10,h:blockH,color:ch.color,label:ch.label,typeLabel:ch.typeLabel,hitTimeSec,hit:false,y:0});
-    });
-  });
-  function frame(){
-    if(!trackPlaying||token.cancelled)return;
-    const toneElapsed=Tone.now()-toneOrigin;
-    const songTime=toneElapsed-VLEAD-audioLatency;
-    const{W:W2,H:H2,ctx}=getTrackLayout();if(!ctx)return;
-    ctx.clearRect(0,0,W2,H2);
-    ctx.strokeStyle='rgba(100,180,255,.05)';ctx.lineWidth=1;
-    for(let c=0;c<=cols;c++){ctx.beginPath();ctx.moveTo(c*colW,0);ctx.lineTo(c*colW,H2);ctx.stroke();}
-    const gs=H2/10;
-    for(let r=0;r<12;r++){
-      const y2=((r*gs)-(songTime*hitY/spChord*0.15)%gs+gs*12)%H2;
-      ctx.beginPath();ctx.moveTo(0,y2);ctx.lineTo(W2,y2);ctx.stroke();
-    }
-    let chordThisFrame=-1;
-    trackNoteBlocks.forEach(b=>{
-      const progress=(songTime-b.hitTimeSec+VLEAD)/VLEAD;
-      const timePastHit=Math.max(0,songTime-b.hitTimeSec);
-      const pastHit=progress>=1;
-      if(pastHit&&!b.hit){b.hit=true;if(b.ci!==trackCurrentChordIdx)chordThisFrame=b.ci;}
-      b.y=pastHit?hitY-b.h*0.18:progress*hitY;
-      const fadeIn=Math.min(1,Math.max(0,(b.y+b.h)/(hitY*0.4)));
-      const fadeOut=pastHit?Math.max(0,1-timePastHit/noteDur):1;
-      const alpha=Math.max(0.12,Math.min(1,fadeIn))*fadeOut;
-      if(alpha<0.01||b.y+b.h<-10)return;
-      const atHit=pastHit||(b.y+b.h>=hitY-4&&b.y<=hitY+blockH*0.5);
-      ctx.globalAlpha=alpha;
-      ctx.fillStyle=b.color+(atHit?'dd':'55');roundRect(ctx,b.x,b.y,b.w,b.h,7);ctx.fill();
-      if(atHit){ctx.shadowColor=b.color;ctx.shadowBlur=22;ctx.fillStyle=b.color+'ff';roundRect(ctx,b.x,b.y,b.w,b.h,7);ctx.fill();ctx.shadowBlur=0;}
-      ctx.strokeStyle=b.color+(atHit?'ff':'77');ctx.lineWidth=atHit?2.5:1;roundRect(ctx,b.x,b.y,b.w,b.h,7);ctx.stroke();
-      ctx.textAlign='center';
-      ctx.fillStyle='rgba(255,255,255,'+(atHit?'1':'.7')+')';ctx.font=(atHit?'bold 16px':'13px')+' system-ui';
-      ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2+5);
-      ctx.fillStyle='rgba(255,255,255,'+(atHit?'.6':'.3')+')';ctx.font='9px system-ui';
-      ctx.fillText(b.typeLabel,b.x+b.w/2,b.y+b.h/2+18);
-      ctx.textAlign='left';ctx.globalAlpha=1;
-    });
-    if(chordThisFrame>=0&&chordThisFrame!==trackCurrentChordIdx){
-      trackCurrentChordIdx=chordThisFrame;
-      const ch=chords[chordThisFrame];
-      const tn=document.getElementById('track-chord-name');const tt=document.getElementById('track-chord-type');
-      if(tn){tn.textContent=ch.label;tn.style.color=ch.color;tn.style.opacity=1;}
-      if(tt){tt.textContent=ch.typeLabel;tt.style.opacity=1;}
-    }
-    const bd=document.getElementById('track-beat-display');
-    if(bd)bd.textContent=songTime<0?'Ready…':'Beat '+(Math.max(0,Math.floor(songTime/spb))+1);
-    if(songTime>totalDur+noteDur+0.8){stopTrack();return;}
-    trackAnimFrame=requestAnimationFrame(frame);
-  }
-  trackAnimFrame=requestAnimationFrame(frame);
-}
-
-function renderSongProgSelect(){
-  const progs=PROGRESSIONS[currentGenre]||[];
-  const cont=document.getElementById('song-prog-select');cont.innerHTML='';
-  progs.forEach((p,i)=>{
-    const b=document.createElement('button');
-    b.className='song-prog-btn'+(i===0?' active':'');
-    b.style.cssText='padding:5px 10px;font-size:11px;white-space:nowrap';
-    b.innerHTML=`<span style="color:var(--accent);font-weight:600;margin-right:6px">${p.nums}</span>${p.name}`;
-    b.onclick=()=>{selectedProgIdx=i;cont.querySelectorAll('.song-prog-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');stopSong();renderCoach();drawIdleRoll();updateCoachTiles();};
-    cont.appendChild(b);
-  });
-  selectedProgIdx=0;
-  renderCoach();
-  drawIdleRoll();
-  updateCoachTiles();
-}
-
-const FEEL_DESCRIPTIONS={
-  // ── Shared ──────────────────────────────────────────────────────────────────
-  straight:     {label:'Straight',        tip:'Clean on-the-beat hits. Great for learning a new progression — lock the changes in first.'},
-  // ── R&B / Neo-Soul ──────────────────────────────────────────────────────────
-  moonchild:    {label:'Moonchild',        tip:'Smooth, syncopated hits that fall between the beats. Gentle and flowing — chords breathe naturally into each other.'},
-  dangelo:      {label:"D'Angelo",         tip:'Heavy syncopation with ghost notes. Hits land unexpectedly — some early, some late, all deliberate. Pocket is deep.'},
-  newjackswing: {label:'New Jack Swing',   tip:"Teddy Riley's signature: clipped, machine-tight 16th-note syncopation. Chords hit on every off-beat subdivision — uptempo, punchy, locked in the grid. Tony! Toni! Toné! and BBD territory."},
-  erykah:       {label:'Erykah Badu',      tip:'Hits on the backbeats and upbeats. Spacious, hypnotic — the groove is in what you leave out as much as what you play.'},
-  glasper:      {label:'Robert Glasper',   tip:'Sparse and patient. One big chord hit, then near-silence. Glasper lets the harmony float — voicings are rootless, space is massive.'},
-  lianne:       {label:'Lianne La Havas',  tip:'Fingerstyle arpeggio feel — quick rolling hits across strings/notes. Folk-soul intimacy with jazz harmony underneath.'},
-  // ── Jazz ────────────────────────────────────────────────────────────────────
-  alfamist:     {label:'Alfa Mist',        tip:'UK neo-soul jazz — chords bloom late into the bar, relaxed and unhurried. Lush extended voicings with hip-hop pulse underneath. Less about the grid, more about the vibe.'},
-  monk:         {label:'Monk',             tip:"Thelonious Monk's approach: angular, space-heavy, intentionally clunky. Hits land where you don't expect them — then silence. The groove lives in the gaps between the notes."},
-  billevans:    {label:'Bill Evans',       tip:"Impressionistic and flowing — chords shift with gentle arpeggio energy. Evans treats the piano like water: voicings ripple through the extensions, never rushed."},
-  herbie:       {label:'Herbie Hancock',   tip:'Jazz meets funk — a strong chord on beat 1 then syncopated ghost hits. Herbie blends bebop harmony with groove that locks with the rhythm section.'},
-  // ── Hip-Hop ─────────────────────────────────────────────────────────────────
-  kidcudi:      {label:'Kid Cudi',         tip:"Dreamy and minimal — one big chord drape at the top of the bar, then space. Cudi's sound is about atmosphere over complexity. Let the chord ring and drift."},
-  vibehop:      {label:'Vibe Hop',         tip:'A$AP Rocky + Schoolboy Q + Childish Gambino / Ludwig Göransson influence: hazy, sample-warped chords that bloom late. Half dream-rap, half cinematic — slow the change down, let it breathe.'},
-  hitboy:       {label:'Hitboy',           tip:'Punchy and precise — big hit on the downbeat, tight 16th syncopation on the two. Modern trap production school: every chord hit is deliberate.'},
-  premo:        {label:'Premo',            tip:'DJ Premier / J Dilla boom bap backbone — heavy on 1 and 3, the rest is air. Hard-hitting and classic. The chord lives on the downbeat; space is the signature.'},
-  metro:        {label:'Metro Boomin',     tip:"Trap triples at the top — rapid ghost hits bloom into a sustained chord. Metro's production stacks attack transients in clusters at the start of the bar, then opens up."},
-  // ── House ───────────────────────────────────────────────────────────────────
-  larry:        {label:'Larry Heard',      tip:'Deep house origin — Mr. Fingers style. One chord held for what feels like forever. Slow, patient, spiritual. The entire feel is in the sustain and the air around the note.'},
-  crystal:      {label:'Crystal Waters',   tip:'Vocal house energy — chord hits lock with the four-on-the-floor on 1 and 3, with a gentle syncopated color between. Classic 90s house groove with soul.'},
-  amapiano:     {label:'Amapiano',         tip:'Busta 929 & DJ Maphorisa log drum feel — rolling, syncopated, relaxed. The chord breathes between the log drum kicks. South African house with jazz voicings floating on top.'},
-  // ── Rock ────────────────────────────────────────────────────────────────────
-  radiohead:    {label:'Radiohead',        tip:'Tense and atmosphere-first — displaced hits that resist the natural downbeat. Chords land slightly off from where you expect, creating that eerie floating quality. Think Pyramid Song.'},
-  metronomy:    {label:'Metronomy',        tip:'Art-pop synth bounce — straight chord hits with syncopated offbeat accents. Tight and mechanical but never cold. The Beach / Love Letters feel.'},
-  tvgirl:       {label:'TV Girl',          tip:'Dream-pop strum feel — lazy, hazy, like a chord heard through bedroom walls. Timing drags slightly behind the beat with gentle rolling hits simulating a loose acoustic strum.'},
-  crumb:        {label:'Crumb',            tip:"Psychedelic groove — chords swim and waver. Lida Piettiet's guitar feel: laid-back, almost queasy, with extended voicings that resolve later than expected."},
-  stereolab:    {label:'Stereolab',        tip:'Motorik pulse — metronomically even quarter-note hits with micro-variations in velocity that keep it human. Krautrock meets French pop. Steady, hypnotic, forward motion.'},
-  // ── Electronic ──────────────────────────────────────────────────────────────
-  daftpunk:     {label:'Daft Punk',        tip:'Disco-house funk — chord stabs lock with four-on-the-floor energy, syncopated off-beat color hits. Get Lucky, Around the World feel: everything serves the groove.'},
-  digitalism:   {label:'Digitalism',       tip:'Electro-rock: massive downbeat hit, synth stab on 3, choppy offbeat accents. Paced/Idealism era energy — electronic music that plays like a band.'},
-  bonobo:       {label:'Bonobo',           tip:"Nu-jazz downtempo — floating, warm, minimal chord hits. Simon Green's school: organic samples, spacious arrangement, chord changes that feel earned rather than mechanical."},
-  mareux:       {label:'Mareux',           tip:'Cold wave and synthpop elegance — sparse, deliberate chord placement. Downbeat hit with one mid-bar accent. The darkness is in the space between the notes.'},
-  bjork:        {label:'Björk',            tip:'Angular and unpredictable — hits land in irregular patterns that feel intentional but resist analysis. Medúlla / Vespertine era: nothing is symmetrical, everything is purposeful.'},
-};
-
-const GENRE_FEELS={
-  rnb:[
-    {id:'moonchild',    label:'Moonchild'},
-    {id:'newjackswing', label:'New Jack Swing'},
-    {id:'erykah',       label:'Erykah'},
-    {id:'glasper',      label:'Glasper'},
-    {id:'lianne',       label:'Lianne'},
-  ],
-  jazz:[
-    {id:'alfamist',  label:'Alfa Mist'},
-    {id:'monk',      label:'Monk'},
-    {id:'billevans', label:'Bill Evans'},
-    {id:'herbie',    label:'Herbie'},
-  ],
-  hiphop:[
-    {id:'kidcudi',   label:'Kid Cudi'},
-    {id:'vibehop',   label:'Vibe Hop'},
-    {id:'hitboy',    label:'Hitboy'},
-    {id:'premo',     label:'Premo'},
-    {id:'metro',     label:'Metro Boomin'},
-  ],
-  house:[
-    {id:'larry',     label:'Larry Heard'},
-    {id:'crystal',   label:'Crystal Waters'},
-    {id:'amapiano',  label:'Amapiano'},
-  ],
-  rock:[
-    {id:'radiohead', label:'Radiohead'},
-    {id:'metronomy', label:'Metronomy'},
-    {id:'tvgirl',    label:'TV Girl'},
-    {id:'crumb',     label:'Crumb'},
-    {id:'stereolab', label:'Stereolab'},
-  ],
-  electronic:[
-    {id:'daftpunk',  label:'Daft Punk'},
-    {id:'digitalism',label:'Digitalism'},
-    {id:'bonobo',    label:'Bonobo'},
-    {id:'mareux',    label:'Mareux'},
-    {id:'bjork',     label:'Björk'},
-  ],
-};
-function setFeel(f,btn){
-  currentFeel=f;
-  document.querySelectorAll('.feel-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const fd=FEEL_DESCRIPTIONS[f];
-  const badge=document.getElementById('feel-badge');
-  if(badge&&fd) badge.textContent=fd.label+' feel';
-  // inject feel tip at top of coach
-  const cb=document.getElementById('coach-body');
-  if(cb&&fd){
-    const old=cb.querySelector('.feel-tip-box');
-    if(old)old.remove();
-    const box=document.createElement('div');
-    box.className='feel-tip-box';
-    box.style.cssText='background:rgba(180,60,255,.1);border:1px solid rgba(180,60,255,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px';
-    box.innerHTML=`<div style="font-size:10px;font-weight:500;color:#c97fff;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎭 ${fd.label} feel</div><div style="font-size:11px;color:var(--text2);line-height:1.6">${fd.tip}</div>`;
-    cb.insertBefore(box,cb.firstChild);
-  }
-}
-
-function buildMelodicsKeyboard(){
-  const wrap=document.getElementById('melodics-keyboard');if(!wrap)return;
-  wrap.innerHTML='';
-  const octaves=getKBOctaves();
-  const wW=34, wH=90, bW=22, bH=56;
-  const totalW=octaves*KB_WHITES_PER_OCT*wW;
-  wrap.style.width=totalW+'px';
-  const startMidi=getKBStartMidi();
-
-  for(let oct=0;oct<octaves;oct++){
-    KB_WHITE_NOTES.forEach((semi,wi)=>{
-      const midi=startMidi+oct*12+semi;
-      const x=((oct*KB_WHITES_PER_OCT)+wi)*wW;
-      const k=document.createElement('div');
-      k.id='mk-'+midi;
-      k.dataset.midi=midi;
-      const octaveNum=Math.floor(midi/12)-1; // MIDI octave number (C4=60 → oct 4)
-      k.style.cssText=`position:absolute;left:${x}px;top:0;width:${wW-1}px;height:${wH}px;`+
-        `background:linear-gradient(180deg,#f8f0ff,#e8d8f0);border:1px solid rgba(140,80,120,.4);`+
-        `border-radius:0 0 5px 5px;cursor:pointer;transition:background .06s,transform .06s;`+
-        `display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;`+
-        `font-size:9px;font-weight:600;color:rgba(80,20,40,.5);z-index:1`;
-      k.textContent=NOTE_NAMES[midi%12]+(semi===0?octaveNum:'');
-      k.onclick=()=>{ playNote(midi,0,0.8); checkChordMatchFromKey(midi); };
-      wrap.appendChild(k);
-    });
-    // black keys
-    KB_BLACK_OFFSETS.forEach((xOff,bi)=>{
-      const semi=KB_BLACK_NOTES[bi];
-      const midi=startMidi+oct*12+semi;
-      const x=((oct*KB_WHITES_PER_OCT)+xOff)*wW;
-      const k=document.createElement('div');
-      k.id='mk-'+midi;
-      k.dataset.midi=midi;
-      k.style.cssText=`position:absolute;left:${x}px;top:0;width:${bW}px;height:${bH}px;`+
-        `background:linear-gradient(180deg,#1a0015,#2d0025);border-radius:0 0 4px 4px;`+
-        `cursor:pointer;transition:background .06s;z-index:2;`+
-        `display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;`+
-        `font-size:8px;color:rgba(255,140,160,.4)`;
-      k.textContent=NOTE_NAMES[midi%12];
-      k.onclick=()=>{ playNote(midi,0,0.8); checkChordMatchFromKey(midi); };
-      wrap.appendChild(k);
-    });
-  }
-  updateOctaveLabel();
-}
-
-function shiftKBOctave(delta){
-  KB_OCTAVE_SHIFT = Math.max(-2, Math.min(2, KB_OCTAVE_SHIFT + delta));
-  // Rebuild whichever keyboards are currently in the DOM
-  if(document.getElementById('melodics-keyboard')) buildMelodicsKeyboard();
-  if(document.getElementById('melody-keyboard-wrap') && _lastMelodyKBContext){
-    const { rm, rootNote, chordSet, scaleSet } = _lastMelodyKBContext;
-    buildMelodyKeyboard(rm, rootNote, chordSet, scaleSet);
-  }
-  updateOctaveLabel();
-  status('🎹 Keyboard range: ' + midiToToneName(getKBStartMidi()) + ' – ' +
-    midiToToneName(getKBStartMidi() + getKBOctaves()*12 - 1));
-}
-
-function updateOctaveLabel(){
-  const rangeText = midiToToneName(getKBStartMidi()) + '–' +
-    midiToToneName(getKBStartMidi() + getKBOctaves()*12 - 1);
-  const el = document.getElementById('kb-octave-label');
-  if(el) el.textContent = rangeText;
-  const el2 = document.getElementById('vm-kb-octave-label');
-  if(el2) el2.textContent = rangeText;
-}
-
-function lightKeys(midis){
-  // Reset match tracking when a new chord becomes active
-  lastMatchedChordKey = null;
-  // clear all
-  kbLitMidis.forEach(m=>{
-    const k=document.getElementById('mk-'+m);
-    if(k){
-      const isBlack=KB_BLACK_NOTES.includes(m%12);
-      k.style.background=isBlack?'linear-gradient(180deg,#1a0015,#2d0025)':'linear-gradient(180deg,#f8f0ff,#e8d8f0)';
-      k.style.transform='';
-      k.style.boxShadow='';
-    }
-  });
-  kbLitMidis=new Set(midis);
-  midis.forEach((m,i)=>{
-    const k=document.getElementById('mk-'+m);
-    if(!k)return;
-    const isBlack=KB_BLACK_NOTES.includes(m%12);
-    const colors=['#ff4d7a','#ff8030','#d97bff','#ff6b8a','#ffb347'];
-    k.style.background=`linear-gradient(180deg,${colors[i%colors.length]},${colors[(i+2)%colors.length]})`;
-    k.style.transform='translateY(2px)';
-    k.style.boxShadow=`0 0 14px ${colors[i%colors.length]}`;
-  });
-}
-
-function getProgChords(){
-  const prog=PROGRESSIONS[currentGenre][selectedProgIdx];if(!prog)return[];
-  const rm=getRootMidi(),mode=getMode();
-  const scaleIvs=SCALES.natural[mode]||SCALES.natural.major;
-  const numerals=prog.nums.split('-').map(n=>parseInt(n.replace(/\D/g,''))-1);
-  return numerals.map((deg,i)=>{
-    const ri=scaleIvs[Math.min(deg,scaleIvs.length-1)]||0;
-    const chordRoot=rm+ri;
-    const typeName=prog.chords[i];
-    const ct=CHORD_TYPES.find(c=>c.name===typeName)||CHORD_TYPES[0];
-    const voicingIvs=VOICING_SHORTS[typeName]||ct.intervals;
-    const midis=voicingIvs.map(iv=>chordRoot+iv);
-    return{
-      label:NOTE_NAMES[chordRoot%12]+(typeName==='maj'?'':typeName),
-      typeLabel:ct.label,
-      color:CHORD_COLORS[i%CHORD_COLORS.length],
-      midis,chordRoot,typeName,deg,
-      numStr:prog.nums.split('-')[i],
-    };
-  });
-}
-
-function drawIdleRoll(){
-  const{W,H,ctx}=getMelodicsLayout();
-  const chords=getProgChords();if(!chords.length)return;
-  const hitY=H*0.78;
-  document.getElementById('hit-line').style.top=hitY+'px';
-  ctx.clearRect(0,0,W,H);
-  // Grid
-  ctx.strokeStyle='rgba(255,100,140,.06)';ctx.lineWidth=1;
-  const cols=chords.length;
-  const colW=W/cols;
-  for(let c=0;c<=cols;c++){ctx.beginPath();ctx.moveTo(c*colW,0);ctx.lineTo(c*colW,H);ctx.stroke();}
-  for(let r=0;r<8;r++){ctx.beginPath();ctx.moveTo(0,r*H/8);ctx.lineTo(W,r*H/8);ctx.stroke();}
-  // Draw sample blocks near hit line
-  const blockH=hitY*0.18;
-  chords.forEach((ch,i)=>{
-    const x=i*colW+6;const w=colW-12;const y=hitY-blockH-8;
-    ctx.fillStyle=ch.color+'55';
-    roundRect(ctx,x,y,w,blockH,6);ctx.fill();
-    ctx.strokeStyle=ch.color+'cc';ctx.lineWidth=1.5;
-    roundRect(ctx,x,y,w,blockH,6);ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='bold 14px system-ui';
-    ctx.textAlign='center';
-    ctx.fillText(ch.label,x+w/2,y+blockH/2+4);
-    ctx.fillStyle='rgba(255,255,255,.45)';ctx.font='10px system-ui';
-    ctx.fillText(ch.numStr,x+w/2,y+blockH/2+17);
-    ctx.textAlign='left';
-  });
-}
-
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);
-  ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
-}
-
-function exitSongMode(){
-  setTab('chords',document.querySelector('.htab'));
-}
-function toggleSongPlay(){
-  if(melodicsPlaying){pauseSong();return;}
-  startSong();
-}
-function pauseSong(){
-  melodicsPlaying=false;
-  document.getElementById('song-play-btn').textContent='▶ Play';
-  if(melodicsAnimFrame)cancelAnimationFrame(melodicsAnimFrame);
-  melodicsToken.cancelled=true;
-}
-function stopSong(){
-  melodicsPlaying=false;melodicsToken.cancelled=true;
-  document.getElementById('song-play-btn').textContent='▶ Play';
-  if(melodicsAnimFrame)cancelAnimationFrame(melodicsAnimFrame);
-  noteBlocks=[];lightKeys([]);kbLitMidis=new Set();currentChordIdx=-1;
-  document.getElementById('song-beat-display').textContent='—';
-  const cn=document.getElementById('current-chord-name');
-  const ct2=document.getElementById('current-chord-type');
-  if(cn){cn.style.opacity=0;}if(ct2){ct2.style.opacity=0;}
-  drawIdleRoll();
-}
-function toggleLoop(){loopOn=!loopOn;document.getElementById('loop-label').textContent=loopOn?'🔁 Loop On':'🔁 Loop Off';}
-
-function startSong(){
-  melodicsPlaying=true;
-  melodicsToken={cancelled:false};
-  const token=melodicsToken;
-  document.getElementById('song-play-btn').textContent='⏸ Pause';
-  // Ensure audio context is running before scheduling any notes
-  ensureToneStarted();
-  const{W,H}=getMelodicsLayout();
-  const hitY=H*0.78;
-  document.getElementById('hit-line').style.top=hitY+'px';
-  const chords=getProgChords();if(!chords.length)return;
-  const spb=60/bpm;
-  const spChord=spb*2;
-  const feel=FEELS[currentFeel]||FEELS.straight;
-  const totalDur=chords.length*spChord;
-  const cols=chords.length;
-  const colW=W/cols;
-  const blockH=Math.max(40,hitY*0.18);
-  // Instrument-specific durations: piano sustains much longer than plucked/strummed
-  const songInst=currentInst+'-'+currentSubInst;
-  const isPianoGrand=(songInst==='piano-grand');
-  const soundDur=isPianoGrand ? spChord*0.88 : Math.max(0.08,spChord*0.38);
-  // noteDur = how long the block glows at the hit line (should match audible decay)
-  const noteDur=isPianoGrand ? spChord*1.3 : Math.max(0.38,spChord*0.48);
-  // Audio output latency compensation: blocks hit the line when the sound is HEARD
-  const audioLatency=Math.min((Tone.context.rawContext.outputLatency||0)+(Tone.context.rawContext.baseLatency||0),0.25);
-
-  const VISUAL_LEAD_SEC = 1.2; // seconds blocks appear before they hit the line
-  const audioStart=Tone.now()+VISUAL_LEAD_SEC;
-  const toneOrigin=Tone.now();
-
-  // Build note blocks — each stores its hitTimeSec so we can derive Y from time
-  noteBlocks=[];
-  feel.forEach(hit=>{
-    chords.forEach((ch,ci)=>{
-      const hitTimeSec=ci*spChord+(hit.b/16)*spChord;
-      const swingOff=hit.b%2===1?swingAmt*(spb/4):0;
-      const audioTime=audioStart+hitTimeSec+swingOff;
-
-      // Schedule audio at the exact Tone.js time
-      ch.midis.forEach((m,mi)=>{
-        const noteName=midiToToneName(m);
-        const toneTime=audioTime+mi*0.018;
-        const v=hit.v*0.82;
-        const dur=soundDur;
-        ensureToneStarted().then(()=>{
-          const inst=currentInst+'-'+currentSubInst;
-          if(inst==='piano-grand'&&samplerReady&&pianoSampler){
-            pianoSampler.triggerAttackRelease(noteName,dur,toneTime,v*0.9);
-          } else if(inst==='piano-grand'){
-            if(!samplerLoading) loadPianoSampler();
-            playPhysicsPiano(m,toneTime,dur,v*0.85);
-          } else if(inst==='piano-rhodes'){
-            getRhodesSynth().triggerAttackRelease(noteName,dur,toneTime,v*0.7);
-          } else if(currentInst==='guitar'){
-            getGuitarSynth().triggerAttackRelease(noteName,dur,toneTime,v);
-          } else if(currentInst==='bass'){
-            getBassSynth().triggerAttackRelease(midiToToneName(m-12),dur,toneTime,v);
-          } else {
-            // fallback — use rich piano synth
-            getRichPianoSynth().triggerAttackRelease(noteName,dur,toneTime,v*0.85);
-          }
-        });
-      });
-
-      // Each block knows exactly when it should hit the line (in song-seconds)
-      // Y position is computed fresh every frame from the audio clock
-      noteBlocks.push({
-        ci,
-        x:ci*colW+5, w:colW-10, h:blockH,
-        color:ch.color, label:ch.label, typeLabel:ch.typeLabel,
-        midis:ch.midis, vel:hit.v,
-        hitTimeSec,       // when (in song-seconds) the block reaches hitY
-        hit:false,        // have we triggered the visual highlight yet?
-        y:0,              // computed each frame — not stored between frames
-      });
-    });
-  });
-
-  function frame(){
-    if(!melodicsPlaying||token.cancelled)return;
-
-    const toneElapsed=Tone.now()-toneOrigin;
-    // Subtract audioLatency so the block hits the line when the sound is HEARD,
-    // not just when it's scheduled (compensates for OS audio output buffer delay)
-    const songTime=toneElapsed-VISUAL_LEAD_SEC-audioLatency;
-
-    const{W:W2,H:H2,ctx}=getMelodicsLayout();
-    ctx.clearRect(0,0,W2,H2);
-
-    // Scrolling background grid (purely cosmetic, driven by songTime)
-    ctx.strokeStyle='rgba(180,80,255,.05)';ctx.lineWidth=1;
-    for(let c=0;c<=cols;c++){
-      ctx.beginPath();ctx.moveTo(c*colW,0);ctx.lineTo(c*colW,H2);ctx.stroke();
-    }
-    const gridSpacing=H2/10;
-    for(let r=0;r<12;r++){
-      const y2=((r*gridSpacing)-(songTime*hitY/spChord*0.15)%gridSpacing+gridSpacing*12)%H2;
-      ctx.beginPath();ctx.moveTo(0,y2);ctx.lineTo(W2,y2);ctx.stroke();
-    }
-
-    // ── Draw blocks ───────────────────────────────────────────────────────
-    // Before hit: block falls from top to hitY over VISUAL_LEAD_SEC seconds.
-    // After hit: block pins at the line and fades out over noteDur seconds,
-    //            so the visual persists for as long as the note sounds.
-    let chordThisFrame=-1;
-    noteBlocks.forEach(b=>{
-      const progress=(songTime-b.hitTimeSec+VISUAL_LEAD_SEC)/VISUAL_LEAD_SEC;
-      const timePastHit=Math.max(0,songTime-b.hitTimeSec);
-      const pastHit=progress>=1;
-
-      // Trigger hit event exactly once
-      if(pastHit&&!b.hit){
-        b.hit=true;
-        if(b.ci!==currentChordIdx) chordThisFrame=b.ci;
-      }
-
-      // Y position: fall until hit line, then pin there
-      b.y=pastHit ? hitY-b.h*0.18 : progress*hitY;
-
-      // Alpha: fade in during approach, fade out after hit over noteDur
-      const fadeIn=Math.min(1,Math.max(0,(b.y+b.h)/(hitY*0.4)));
-      const fadeOut=pastHit ? Math.max(0,1-timePastHit/noteDur) : 1;
-      const alpha=Math.max(0.12,Math.min(1,fadeIn))*fadeOut;
-
-      // Skip fully-faded or pre-visible blocks
-      if(alpha<0.01||b.y+b.h<-10) return;
-
-      const atHit=pastHit||( b.y+b.h>=hitY-4 && b.y<=hitY+blockH*0.5 );
-
-      ctx.globalAlpha=alpha;
-      ctx.fillStyle=b.color+(atHit?'dd':'66');
-      roundRect(ctx,b.x,b.y,b.w,b.h,7);ctx.fill();
-
-      if(atHit){
-        ctx.shadowColor=b.color;ctx.shadowBlur=22;
-        ctx.fillStyle=b.color+'ff';
-        roundRect(ctx,b.x,b.y,b.w,b.h,7);ctx.fill();
-        ctx.shadowBlur=0;
-      }
-      ctx.strokeStyle=b.color+(atHit?'ff':'88');
-      ctx.lineWidth=atHit?2.5:1;
-      roundRect(ctx,b.x,b.y,b.w,b.h,7);ctx.stroke();
-      ctx.textAlign='center';
-      ctx.fillStyle='rgba(255,255,255,'+(atHit?'1':'.72')+')';
-      ctx.font=(atHit?'bold 16px':'13px')+' system-ui';
-      ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2+5);
-      ctx.fillStyle='rgba(255,255,255,'+(atHit?'.65':'.32')+')';
-      ctx.font='9px system-ui';
-      ctx.fillText(b.typeLabel,b.x+b.w/2,b.y+b.h/2+18);
-      ctx.textAlign='left';
-      ctx.globalAlpha=1;
-    });
-
-    // Update chord display + keyboard when a new chord hits
-    if(chordThisFrame>=0&&chordThisFrame!==currentChordIdx){
-      currentChordIdx=chordThisFrame;
-      const ch=chords[chordThisFrame];
-      lightKeys(ch.midis);
-      updateCurrentChordDisplay(ch);
-      updateCoachVoicing(ch);
-    }
-
-    // Beat display
-    const songBeat=Math.max(0,Math.floor(songTime/spb))+1;
-    document.getElementById('song-beat-display').textContent=
-      songTime<0?'Ready…':'Beat '+songBeat;
-
-    // Done when all blocks have faded (totalDur + noteDur tail + small buffer)
-    if(songTime>totalDur+noteDur+0.8){
-      if(loopOn&&!token.cancelled){
-        noteBlocks=[];currentChordIdx=-1;lightKeys([]);
-        startSong();
-      } else {
-        stopSong();
-      }
-      return;
-    }
-    melodicsAnimFrame=requestAnimationFrame(frame);
-  }
-  melodicsAnimFrame=requestAnimationFrame(frame);
-}
-
-function updateCurrentChordDisplay(ch){
-  const cn=document.getElementById('current-chord-name');
-  const ct2=document.getElementById('current-chord-type');
-  if(cn){cn.textContent=ch.label;cn.style.color=ch.color;cn.style.textShadow=`0 0 24px ${ch.color}`;cn.style.opacity=1;}
-  if(ct2){ct2.textContent=ch.typeLabel;ct2.style.opacity=1;}
-}
-
-function updateCoachTiles(){
-  const chords=getProgChords();
-  const wrap=document.getElementById('coach-tiles-wrap');if(!wrap)return;
-  wrap.innerHTML='';
-  chords.forEach((ch,i)=>{
-    const t=document.createElement('div');
-    t.id='ctile-'+i;
-    t.style.cssText=`min-width:64px;padding:8px 10px;border-radius:7px;text-align:center;`+
-      `border:1px solid ${ch.color}55;background:${ch.color}22;transition:all .15s;cursor:pointer`;
-    t.innerHTML=`<div style="font-size:15px;font-weight:700;color:${ch.color}">${ch.label}</div>`+
-      `<div style="font-size:9px;color:rgba(255,200,210,.6);margin-top:2px">${ch.typeLabel}</div>`+
-      `<div style="font-size:9px;color:rgba(255,200,210,.4)">${ch.numStr}</div>`;
-    t.onclick=()=>{playChordMidi(ch.midis,getAudioCtx().currentTime+0.01,1.5,0.85);updateCoachVoicing(ch);lightKeys(ch.midis);};
-    wrap.appendChild(t);
-  });
-}
-
-function updateCoachVoicing(ch){
-  const wrap=document.getElementById('coach-voicing-keys');if(!wrap)return;
-  wrap.innerHTML='';
-  // Show the keys to press as colored pills
-  const wW=30,bW=20,bH=34,wH=52;
-  const totalKeys=(ch.midis.length)*wW+40;
-  wrap.style.height=wH+'px';
-  const midiSet=new Set(ch.midis);
-  // draw 2 octave range around chord root
-  const lo=ch.chordRoot-2, hi=ch.chordRoot+16;
-  let x=0;
-  for(let m=lo;m<=hi;m++){
-    const semi=m%12;
-    const isBlack=KB_BLACK_NOTES.includes(semi);
-    if(isBlack)continue;
-    const k=document.createElement('div');
-    const lit=midiSet.has(m);
-    k.style.cssText=`display:inline-flex;flex-direction:column;align-items:center;justify-content:flex-end;`+
-      `width:${wW-1}px;height:${wH}px;border-radius:0 0 4px 4px;`+
-      `border:1px solid ${lit?ch.color:'rgba(255,100,140,.2)'};`+
-      `background:${lit?ch.color+'cc':'rgba(255,240,250,.08)'};`+
-      `margin-right:1px;flex-shrink:0;cursor:pointer;transition:all .1s;`+
-      `font-size:8px;color:${lit?'white':'rgba(255,140,160,.3)'};padding-bottom:4px;`+
-      (lit?`box-shadow:0 0 10px ${ch.color}88;`:'');
-    k.textContent=NOTE_NAMES[m%12];
-    k.onclick=()=>playNote(m,getAudioCtx().currentTime,0.8);
-    wrap.appendChild(k);
-    // Black key overlay
-    const nextSemi=(m+1)%12;
-    if(KB_BLACK_NOTES.includes(nextSemi)&&m+1<=hi){
-      const bk=document.createElement('div');
-      const blit=midiSet.has(m+1);
-      bk.style.cssText=`display:inline-flex;align-items:flex-end;justify-content:center;`+
-        `width:${bW}px;height:${bH}px;border-radius:0 0 3px 3px;`+
-        `background:${blit?ch.color:'#1a0015'};`+
-        `margin-left:-${bW/2}px;margin-right:-${bW/2}px;`+
-        `position:relative;z-index:2;flex-shrink:0;cursor:pointer;`+
-        `font-size:7px;color:${blit?'white':'rgba(255,140,160,.3)'};padding-bottom:3px;`+
-        (blit?`box-shadow:0 0 8px ${ch.color};`:'');
-      bk.textContent=NOTE_NAMES[(m+1)%12];
-      bk.onclick=()=>playNote(m+1,0,0.8);
-      wrap.appendChild(bk);
-    }
-  }
-}
-
 // ============================================================
 // CHORD MATCHING — play the right notes on your MIDI keyboard
 // to trigger the chord, same as clicking it with your mouse.
